@@ -1,7 +1,7 @@
 // src/App.tsx
 import React, { useState, useEffect } from "react";
 import Toast from "./components/Toast";
-import { isValidDomain, generateCorporateEmails } from "./utils/emailGenerator";
+import { isValidDomain, generateCorporateEmails, extractDomain } from "./utils/emailGenerator";
 
 const App: React.FC = () => {
   // State Variables
@@ -46,8 +46,11 @@ const App: React.FC = () => {
 
     const emails: { [key: string]: string[] } = {};
 
-    selectedDomains.forEach((domain) => {
-      emails[domain] = generateCorporateEmails(domain);
+    selectedDomains.forEach((inputDomain) => {
+      const extractedDomain = extractDomain(inputDomain);
+      if (extractedDomain) {
+        emails[extractedDomain] = generateCorporateEmails(inputDomain);
+      }
     });
 
     setGeneratedEmails(emails);
@@ -276,7 +279,7 @@ const App: React.FC = () => {
           {/* Generated Emails Section */}
           <div className="bg-white p-8 rounded-lg shadow-lg flex-1">
             <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-              Generated Emails
+              HR & Recruitment Emails
             </h2>
             {Object.keys(generatedEmails).length > 0 ? (
               <>
@@ -299,7 +302,10 @@ const App: React.FC = () => {
                   <span className="font-bold text-green-600">
                     {generatedEmailsCount}
                   </span>{" "}
-                  emails.
+                  potential HR & recruitment emails.
+                </p>
+                <p className="text-sm text-gray-500 mt-1">
+                  These are common patterns used by HR departments. Try them to find the right contact!
                 </p>
                 <a
                   href={composeGmailLink()}
@@ -329,7 +335,7 @@ const App: React.FC = () => {
               </>
             ) : (
               <p className="text-gray-600">
-                Generated emails will appear here.
+                Enter a company domain to generate potential HR and recruitment email addresses.
               </p>
             )}
           </div>

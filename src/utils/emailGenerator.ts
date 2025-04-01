@@ -1,31 +1,72 @@
 // src/utils/emailGenerator.ts
 
 /**
- * Validates if a string is a properly formatted domain.
- * @param domain - The domain string to validate.
- * @returns True if the domain is valid, false otherwise.
+ * Extracts and validates a domain from various input formats.
+ * @param input - The input string which could be a URL or domain.
+ * @returns The extracted domain or null if invalid.
  */
-export const isValidDomain = (domain: string): boolean => {
-  // Basic domain validation regex
-  const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+$/;
-  return domainRegex.test(domain);
+export const extractDomain = (input: string): string | null => {
+  // Remove whitespace and convert to lowercase
+  let cleanInput = input.trim().toLowerCase();
+  
+  try {
+    // If the input includes a protocol, try to parse it as a URL
+    if (cleanInput.includes('://')) {
+      // Normalize multiple slashes in the URL path
+      cleanInput = cleanInput.replace(/([^:]\/)\/+/g, "$1");
+      const url = new URL(cleanInput);
+      cleanInput = url.hostname;
+    } else if (cleanInput.startsWith('www.')) {
+      // Remove www. prefix if present
+      cleanInput = cleanInput.substring(4);
+    }
+    
+    // Remove any paths, query parameters, or fragments
+    cleanInput = cleanInput.split('/')[0];
+    
+    // Basic domain validation
+    if (cleanInput.includes('.') && !cleanInput.endsWith('.')) {
+      return cleanInput;
+    }
+  } catch (error) {
+    // URL parsing failed, try a more lenient approach
+    // Extract domain using regex pattern
+    const domainPattern = /^(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)/i;
+    const match = cleanInput.match(domainPattern);
+    if (match && match[1]) {
+      return match[1];
+    }
+  }
+  
+  return null;
+};
+
+/**
+ * Validates if a string can be processed as a domain.
+ * @param input - The input string to validate.
+ * @returns True if the input can be processed as a domain, false otherwise.
+ */
+export const isValidDomain = (input: string): boolean => {
+  return extractDomain(input) !== null;
 };
 
 /**
  * Generates a list of HR and hiring-related email addresses based on the provided domain.
- * @param domain - The company domain (e.g., example.com).
+ * @param input - The company domain or URL (e.g., example.com or https://www.example.com).
  * @returns An array of HR and hiring-related email addresses.
  */
-export const generateCorporateEmails = (domain: string): string[] => {
+export const generateCorporateEmails = (input: string): string[] => {
+  const domain = extractDomain(input);
+  
+  if (!domain) {
+    return [];
+  }
+  
   // Primary HR and recruitment email prefixes
   const hrPrefixes = [
     // Standard HR emails
     "hr",
-    "humanresources",
-    "human-resources",
-    "human.resources",
-    "h.r",
-    
+
     // Careers and jobs
     "careers",
     "career",
@@ -34,7 +75,6 @@ export const generateCorporateEmails = (domain: string): string[] => {
     "employment",
     "work",
     "workwithus",
-    "work-with-us",
     
     // Recruitment specific
     "recruiting",
@@ -43,7 +83,6 @@ export const generateCorporateEmails = (domain: string): string[] => {
     "recruit",
     "hiring",
     "hiringteam",
-    "hiring-team",
     "apply",
     "application",
     "applications",
@@ -51,26 +90,20 @@ export const generateCorporateEmails = (domain: string): string[] => {
     // Talent acquisition
     "talent",
     "talentacquisition",
-    "talent-acquisition",
     "talent.acquisition",
     "talents",
     
     // HR personnel titles
     "hr-manager",
     "hrmanager",
-    "hr-director",
-    "hrdirector",
     "hr-team",
     "hrteam",
-    "hr-department",
     "hrdepartment",
     
     // Recruitment personnel
     "recruiter",
     "recruiters",
-    "recruitment-team",
     "recruitmentteam",
-    "talent-manager",
     "talentmanager",
     
     // Application specific
@@ -91,20 +124,6 @@ export const generateCorporateEmails = (domain: string): string[] => {
     "intern",
     "interns",
     
-    // Regional variations
-    "careers-us",
-    "careers-uk",
-    "careers-eu",
-    "careers-asia",
-    
-    // Department specific
-    "techjobs",
-    "tech-jobs",
-    "tech-careers",
-    "engineering-jobs",
-    "sales-jobs",
-    "marketing-jobs",
-    
     // Common combinations
     "jobs-careers",
     "careers-jobs",
@@ -119,11 +138,6 @@ export const generateCorporateEmails = (domain: string): string[] => {
     "opportunity",
     "career-opportunities",
     "careeropportunities",
-    
-    // Staffing related
-    "staffing",
-    "staff",
-    "personnel",
   ];
 
   // Generate emails by appending each prefix to the domain
